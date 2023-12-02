@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1>{{5 * 6}}</h1>
+<h2>{{num}}</h2>
+{% for key,value in data.items(): %}
+    {% if is_list(value): %}
+        <h1>{{key}}</h1>
+        {% for item in value: %}
+            <span>{{item}}</span>
+        {% endfor %}
+    {% else: %}
+    <h1>{{key}}</h1>
+    <p>{{value}}</p>
+    {% endif %}
+{% endfor %}
+</body>
+<footer>
+    <p>Copyright {{year}}.  Built by Matthew</p>
+</footer>
+</html>

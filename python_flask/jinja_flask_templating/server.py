@@ -10,19 +10,17 @@ app = Flask(__name__)
 def is_list(value):
     return isinstance(value, list)
 
+
 @app.route('/')
 def home():
-    random_number = random.randint(1,10)
-    current_year = dt.datetime.now().year
-    return render_template('index.html', num=random_number, year = current_year)
-
-@app.route('/data')
-def get_data():
     url = "https://api.npoint.io/efa6acee161e2a74b997"
     response = requests.get(url).json()
 
     return render_template("index.html", data=response, is_list=is_list)
 
+@app.route('/blog/<num>')
+def blog_page(num):
+    return render_template("blog.html", num=num)
 
 if __name__ == "__main__":
     app.run(debug=True)

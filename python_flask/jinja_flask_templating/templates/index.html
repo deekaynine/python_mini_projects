@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Home</title>
 </head>
 <body>
-<h1>{{5 * 6}}</h1>
+<a href="{{url_for('blog_page', num=4)}}">Go to blog page</a>
 <h2>{{num}}</h2>
 {% for key,value in data.items(): %}
     {% if is_list(value): %}

@@ -20,7 +20,7 @@ def get_post(post_id):
     single_post = None
     for blog_post in post_objects:
         if blog_post.id == post_id:
-            single_post = post
+            single_post = blog_post
     return render_template("post.html", post=single_post)
 
 

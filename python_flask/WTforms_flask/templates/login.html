@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
+{ % extends "base.html" %}
 
-<html>
-	<head>
-		<title>Login</title>
-	</head>
-	<body>
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
         <div class="container">
 		<h1>Login</h1>
 			<form action={{url_for('login_page')}} method="POST" novalidate>
@@ -24,5 +24,8 @@
 				{{form.submit}}
 			</form>
         </div>
-	</body>
-</html>
+<!-- Easiest way to render a form using bootstrap flask-->
+		<div class="container"></div>
+			<h1>Login</h1>
+				{{ render_form(form)}}
+{% endblock %}

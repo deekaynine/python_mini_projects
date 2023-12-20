@@ -10,6 +10,7 @@ posts = requests.get("https://api.npoint.io/c790b4d5cab58020d391").json()
 OWN_EMAIL = os.getenv("EMAIL")
 OWN_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
+
 app = Flask(__name__)
 
 

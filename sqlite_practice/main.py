@@ -58,7 +58,7 @@ with app.app_context():
 with app.app_context():
     book_id = 1
     book_to_delete = db.session.execute(db.select(Book).where(Book.id == book_id)).scalar()
-    # or book_to_delete = db.get_or_404(Book, book_id)
+    # or book_to_delete = db.get_or_404(Book, book_id)  
     db.session.delete(book_to_delete)
     db.session.commit()
 

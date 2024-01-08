@@ -13,7 +13,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
 
 
-from forms import CreatePostForm, RegisterForm, LoginForm
+from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
+
+
 
 
 app = Flask(__name__)
@@ -27,6 +29,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
 db = SQLAlchemy()
 db.init_app(app)
 
+
+
 # Configure Flask-Login's Login Manager
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -36,6 +40,16 @@ login_manager.init_app(app)
 def load_user(user_id):
     return db.get_or_404(User, user_id)
 
+# For adding profile images to the comment section
+gravatar = Gravatar(app,
+                    size=100,
+                    rating='g',
+                    default='retro',
+                    force_default=False,
+                    force_lower=False,
+                    use_ssl=False,
+                    base_url=None)
+
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -43,21 +57,36 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(100))
+    posts = relationship("BlogPost", back_populates="author")
+    comments = relationship("Comment", back_populates= "comment_author")
 
 
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
     id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    author = relationship("User", back_populates="posts")
     title = db.Column(db.String(250), unique=True, nullable=False)
     subtitle = db.Column(db.String(250), nullable=False)
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
-    author = db.Column(db.String(250), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
+    comments = relationship("Comment", back_populates="parent_post")
+
+
+class Comment(db.Model):
+    __tablename__ = "comments"
+    id = db.Column(db.Integer, primary_key=True)
+    comment_author = relationship("User", back_populates="comments")
+    author_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    text = db.Column(db.Text, nullable=False)
+    parent_post = relationship("BlogPost", back_populates="comments")
+    post_id = db.Column(db.Integer, db.ForeignKey("blog_posts.id"))
 
 
 with app.app_context():
     db.create_all()
+
 
 
 # Admin only middleware/interceptor
@@ -68,6 +97,7 @@ def admin_only(func):
             return abort(403)
         return func(*args,**kwargs)
     return inner_func
+
 
 @app.route('/register', methods=["GET","POST"])
 def register():
@@ -128,15 +158,30 @@ def logout():
 
 @app.route('/')
 def get_all_posts():
+    print(current_user)
     result = db.session.execute(db.select(BlogPost))
     posts = result.scalars().all()
     return render_template("index.html", all_posts=posts, current_user=current_user)
 
 
-@app.route('/<int:post_id>')
+@app.route('/post/<int:post_id>', methods=["GET", "POST"])
 def show_post(post_id):
     requested_post = db.get_or_404(BlogPost, post_id)
-    return render_template("post.html", post=requested_post, current_user=current_user)
+    comment_form = CommentForm()
+    if comment_form.validate_on_submit():
+        if not current_user.is_authenticated:
+            flash("You need to login or register to comment.")
+            return redirect(url_for("login"))
+
+        new_comment = Comment(
+            text=comment_form.comment_text.data,
+            comment_author=current_user,
+            parent_post=requested_post
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        return redirect(url_for("show_post", post_id= post_id))
+    return render_template("post.html", post=requested_post, current_user=current_user, form=comment_form)
 
 
 @app.route('/new-post',methods=["GET", "POST"])
@@ -149,7 +194,7 @@ def add_post():
             subtitle=form.subtitle.data,
             body=form.body.data,
             img_url=form.img_url.data,
-            author=form.author.data,
+            author=current_user,
             date=date.today().strftime("%B %d, %Y")
         )
         db.session.add(new_post)
